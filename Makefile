@@ -70,6 +70,12 @@ infra-down: ## Parar infra (PostgreSQL + MinIO)
 
 # ── Testes ───────────────────────────────────────────────────
 
+test-e2e: ## Rodar testes E2E com Cypress (requer stack rodando: make up)
+	$(COMPOSE_DEV) --profile e2e run --rm cypress run
+
+test-e2e-spec: ## Rodar spec específico: make test-e2e-spec SPEC=kanban
+	$(COMPOSE_DEV) --profile e2e run --rm cypress run --spec "cypress/e2e/$(SPEC).cy.ts"
+
 test-backend: ## Rodar testes do backend (unitários + integração)
 	$(COMPOSE_DEV) exec backend ./mvnw test -Dtest='!FlywayMigrationTest' -q
 

@@ -14,7 +14,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5434}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -106,10 +106,41 @@ services:
     working_dir: /workspace
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+      CYPRESS_INSTALL_BINARY: "0"
     command: >
       sh -c "npm install --prefer-offline && npm run dev"
     ports:
       - "5173:5173"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5173 > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      start_period: 90s
+      retries: 6
+
+  # ── E2E (Cypress) ──────────────────────────────────────────────────────────
+  # Uso: make test-e2e
+  # Linux only: network_mode host permite que o browser acesse localhost:5173 e :8080
+  cypress:
+    image: cypress/included:13.17.0
+    container_name: rgm-cypress
+    network_mode: host
+    working_dir: /workspace
+    volumes:
+      - ../rgm-frontend/app:/workspace
+      - npm-cache:/root/.npm
+    environment:
+      CYPRESS_BASE_URL: http://localhost:5173
+      CYPRESS_apiUrl: http://localhost:8080/api
+      CYPRESS_adminEmail: admin@rgm.com
+      CYPRESS_adminPassword: admin123
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    profiles:
+      - e2e
 
 volumes:
   pgdata:
