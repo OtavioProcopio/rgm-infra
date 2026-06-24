@@ -51,10 +51,7 @@ services:
       "
 
   backend:
-    build:
-      context: ../rgm-backend
-      dockerfile: Dockerfile
-    image: ${BACKEND_IMAGE:-rgm-backend:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/otavioprocopio/rgm-backend:latest}
     container_name: rgm-backend-prod
     restart: always
     environment:
@@ -83,12 +80,7 @@ services:
       retries: 3
 
   frontend:
-    build:
-      context: ../rgm-frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: /api
-    image: ${FRONTEND_IMAGE:-rgm-frontend:latest}
+    image: ${FRONTEND_IMAGE:-ghcr.io/otavioprocopio/rgm-frontend:latest}
     container_name: rgm-frontend-prod
     restart: always
     ports:
