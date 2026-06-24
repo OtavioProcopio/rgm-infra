@@ -17,6 +17,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           fetch-depth: 0
 
       - name: Configure Git
