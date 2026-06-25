@@ -70,6 +70,8 @@ infra-down: ## Parar infra (PostgreSQL + MinIO)
 
 # ── Testes ───────────────────────────────────────────────────
 
+test-all: test-backend test-frontend test-e2e ## Rodar todas as suítes de testes (backend, frontend e E2E)
+
 test-e2e: ## Rodar testes E2E com Cypress (requer stack rodando: make up)
 	$(COMPOSE_DEV) --profile e2e run --rm cypress run
 
