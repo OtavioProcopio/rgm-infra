@@ -13,6 +13,11 @@ COMPOSE_MONITORING := docker compose -f docker-compose.dev.yml --env-file .env -
 # Cria .env a partir do exemplo se não existir
 .env:
 	@cp .env.example .env
+	@if grep -q "^JWT_SECRET=$$" .env; then \
+		SECRET=$$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d ' \n' | head -c 64 || echo "development_jwt_secret_fallback_key_32_chars"); \
+		sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$$SECRET/" .env; \
+		echo "🔑 JWT_SECRET gerado automaticamente com sucesso!"; \
+	fi
 	@echo "⚠  .env criado a partir de .env.example — revise antes de subir em produção."
 
 help: ## Mostrar todos os comandos disponíveis
