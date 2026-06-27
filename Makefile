@@ -1,6 +1,6 @@
 .PHONY: help setup up down logs logs-backend logs-frontend ps \
         infra-up infra-down \
-        test-all test-e2e test-e2e-spec test-backend test-backend-all test-frontend check-frontend \
+        test-all test-e2e test-e2e-spec test-backend test-backend-all test-frontend check-frontend validate \
         monitoring-up monitoring-down \
         build-prod prod-up prod-down prod-logs \
         reset reset-infra reset-prod status
@@ -14,7 +14,7 @@ COMPOSE_MONITORING := docker compose -f docker-compose.dev.yml --env-file .env -
 .env:
 	@cp .env.example .env
 	@if grep -q "^JWT_SECRET=$$" .env; then \
-		SECRET=$$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d ' \n' | head -c 64 || echo "development_jwt_secret_fallback_key_32_chars"); \
+		SECRET=$$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d ' \n' | head -c 64 || echo "development_jwt_fallback_string_32_chars"); \
 		sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$$SECRET/" .env; \
 		echo "🔑 JWT_SECRET gerado automaticamente com sucesso!"; \
 	fi
@@ -36,6 +36,12 @@ help: ## Mostrar todos os comandos disponíveis
 
 setup: .env ## Configuração inicial (cria .env se não existir)
 	@echo "Setup concluído. Execute 'make up' para iniciar o ambiente de dev."
+
+validate: .env ## Validar todas as configurações do Docker Compose
+	$(COMPOSE_DEV) config > /dev/null
+	$(COMPOSE_INFRA) config > /dev/null
+	$(COMPOSE_PROD) config > /dev/null
+	@echo "✅ Configurações do Docker Compose validadas com sucesso!"
 
 # ── Dev completo (containers) ────────────────────────────────
 
