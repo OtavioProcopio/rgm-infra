@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'rgm-backend'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          app: 'rgm-backend'
+    # Para Linux onde host.docker.internal pode não funcionar,
+    # substitua pelo IP do host: ip addr show docker0 | grep inet

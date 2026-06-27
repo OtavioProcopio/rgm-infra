@@ -10,25 +10,29 @@ Para colocar toda a stack no ar em produção, você **não precisa compilar có
 
 ### Passo a Passo:
 
-1.  **Clone este repositório** na máquina servidor:
+1.  **Clone este repositório** na máquina servidor/local:
     ```bash
     git clone git@github.com:OtavioProcopio/rgm-infra.git
     cd rgm-infra
     ```
 
-2.  **Crie e edite as variáveis de ambiente**:
+2.  **Execute o setup automatizado**:
     ```bash
-    cp .env.example .env
+    make setup
     ```
-    Configure as seguintes chaves obrigatórias no `.env`:
-    *   `POSTGRES_PASSWORD`: Senha forte para o banco de dados.
-    *   `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD`: Acesso administrativo do S3.
-    *   `JWT_SECRET`: Chave secreta HMAC para assinatura de tokens (mínimo de 32 bytes).
+    *Isso criará o `.env` a partir do template e gerará automaticamente uma chave `JWT_SECRET` forte e segura para você.*
+    *(Se preferir, você pode editar o `.env` para ajustar o usuário/senha do PostgreSQL/MinIO).*
 
 3.  **Inicie toda a stack**:
     ```bash
     make prod-up
     ```
+
+> [!NOTE]
+> **Notas importantes para Windows (WSL) & Redes:**
+> - **WSL Integration**: Garanta que o Docker Desktop está configurado para usar o WSL2 backend com integração ativada para a sua distribuição de Linux/WSL.
+> - **Conflito de Porta 80**: Em ambientes Windows, o serviço de IIS ou outros proxies nativos podem ocupar a porta `80`. Certifique-se de que a porta está livre para que o Nginx do frontend possa subir, ou altere a porta mapeada em `docker-compose.prod.yml`.
+> - **Acesso à Rede**: Por padrão, o sistema estará disponível em `http://localhost` (ou no IP de rede da máquina/WSL para computadores conectados na mesma rede).
 
 A stack iniciará os seguintes serviços:
 *   `db` (PostgreSQL 16)
