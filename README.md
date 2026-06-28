@@ -16,16 +16,19 @@ Para colocar toda a stack no ar em produção, você **não precisa compilar có
     cd rgm-infra
     ```
 
-2.  **Crie e edite as variáveis de ambiente**:
+2.  **Faça o bootstrap do ambiente local**:
     ```bash
-    cp .env.example .env
+    make setup
     ```
-    Configure as seguintes chaves obrigatórias no `.env`:
+    Esse comando cria o `.env` e clona os repositórios irmão em `RGM-RAP/rgm-backend` e `RGM-RAP/rgm-frontend`, sempre alinhando os dois para a branch `main`, que é o que o modo dev espera.
+
+3.  **Revise e ajuste as variáveis de ambiente geradas**:
+    O `make setup` já cria o `.env` a partir do template. Ajuste as seguintes chaves obrigatórias no arquivo gerado:
     *   `POSTGRES_PASSWORD`: Senha forte para o banco de dados.
     *   `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD`: Acesso administrativo do S3.
     *   `JWT_SECRET`: Chave secreta HMAC para assinatura de tokens (mínimo de 32 bytes).
 
-3.  **Inicie toda a stack**:
+4.  **Inicie toda a stack**:
     ```bash
     make prod-up
     ```
@@ -48,6 +51,14 @@ Sobe toda a infraestrutura mais as aplicações com sincronização de volumes e
 ```bash
 make up
 ```
+Antes disso, rode `make setup` para garantir a árvore esperada:
+
+```text
+RGM-RAP/
+    rgm-infra/
+    rgm-backend/
+    rgm-frontend/
+```
 *   **Vite Frontend**: [http://localhost:5173](http://localhost:5173)
 *   **Spring Backend**: [http://localhost:8080](http://localhost:8080)
 *   **Swagger Docs**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
@@ -69,7 +80,8 @@ O projeto possui comandos mapeados no `Makefile` para facilitar a administraçã
 | Comando | Descrição |
 |---------|-----------|
 | `make help` | Lista todos os comandos disponíveis e URLs. |
-| `make setup` | Cria o arquivo `.env` a partir do template. |
+| `make setup` | Cria o `.env` e clona `rgm-backend`/`rgm-frontend` como repositórios irmãos. |
+| `make clone-backend` / `make clone-frontend` | Clonam apenas um dos repositórios irmãos esperados pelo dev. |
 | `make up` / `make down` | Inicia/para a stack de desenvolvimento. |
 | `make infra-up` / `make infra-down` | Inicia/para apenas banco e S3 para dev nativo. |
 | `make prod-up` / `make prod-down` | Inicia/para a stack de produção (GHCR images). |
