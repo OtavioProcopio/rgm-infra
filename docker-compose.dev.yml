@@ -35,7 +35,7 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - miniodata:/data
+      - ../data/minio:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -186,7 +186,6 @@ services:
 
 volumes:
   pgdata:
-  miniodata:
   maven-cache:
   npm-cache:
   prometheus-data:
