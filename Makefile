@@ -1,4 +1,5 @@
 .PHONY: help setup up down logs logs-backend logs-frontend ps \
+        clone-backend clone-frontend \
         infra-up infra-down \
         test-all test-e2e test-e2e-spec test-backend test-backend-all test-frontend check-frontend validate \
         monitoring-up monitoring-down \
@@ -9,6 +10,12 @@ COMPOSE_DEV        := docker compose -f docker-compose.dev.yml --env-file .env
 COMPOSE_INFRA      := docker compose -f docker-compose.infra.yml --env-file .env
 COMPOSE_PROD       := docker compose -f docker-compose.prod.yml --env-file .env
 COMPOSE_MONITORING := docker compose -f docker-compose.dev.yml --env-file .env --profile monitoring
+
+BACKEND_REPO_URL  := https://github.com/OtavioProcopio/rgm-backend.git
+FRONTEND_REPO_URL := https://github.com/OtavioProcopio/rgm-frontend.git
+WORKSPACE_ROOT     := ..
+BACKEND_DIR       := $(WORKSPACE_ROOT)/rgm-backend
+FRONTEND_DIR      := $(WORKSPACE_ROOT)/rgm-frontend
 
 # Cria .env a partir do exemplo se não existir
 .env:
@@ -34,8 +41,32 @@ help: ## Mostrar todos os comandos disponíveis
 
 # ── Configuração ─────────────────────────────────────────────
 
-setup: .env ## Configuração inicial (cria .env se não existir)
-	@echo "Setup concluído. Execute 'make up' para iniciar o ambiente de dev."
+setup: .env clone-backend clone-frontend ## Configuração inicial (cria .env e clona os repositórios)
+	@echo "Setup concluído. Execute 'make up' para subir a stack completa."
+
+clone-backend: ## Clonar/garantir o repositório do backend em RGM-RAP/rgm-backend
+	@if [ -d "$(BACKEND_DIR)/.git" ]; then \
+		echo "Backend já existe em $(BACKEND_DIR)"; \
+	elif [ -d "$(BACKEND_DIR)" ]; then \
+		echo "$(BACKEND_DIR) já existe, mas não é um repositório Git. Remova a pasta ou escolha outro destino."; \
+		exit 1; \
+	else \
+		git clone --branch main --single-branch "$(BACKEND_REPO_URL)" "$(BACKEND_DIR)"; \
+	fi
+	@git -C "$(BACKEND_DIR)" fetch origin main
+	@git -C "$(BACKEND_DIR)" checkout -B main origin/main
+
+clone-frontend: ## Clonar/garantir o repositório do frontend em RGM-RAP/rgm-frontend
+	@if [ -d "$(FRONTEND_DIR)/.git" ]; then \
+		echo "Frontend já existe em $(FRONTEND_DIR)"; \
+	elif [ -d "$(FRONTEND_DIR)" ]; then \
+		echo "$(FRONTEND_DIR) já existe, mas não é um repositório Git. Remova a pasta ou escolha outro destino."; \
+		exit 1; \
+	else \
+		git clone --branch main --single-branch "$(FRONTEND_REPO_URL)" "$(FRONTEND_DIR)"; \
+	fi
+	@git -C "$(FRONTEND_DIR)" fetch origin main
+	@git -C "$(FRONTEND_DIR)" checkout -B main origin/main
 
 validate: .env ## Validar todas as configurações do Docker Compose
 	$(COMPOSE_DEV) config > /dev/null
