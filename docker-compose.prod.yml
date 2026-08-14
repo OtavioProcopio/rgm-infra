@@ -28,6 +28,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER obrigatório}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD obrigatório}
     ports:
+      - "9000:9000"
       - "9001:9001"
     volumes:
       - miniodata-prod:/data
@@ -62,6 +63,7 @@ services:
       DB_USER: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD obrigatório}
       MINIO_URL: http://minio:9000
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:?MINIO_PUBLIC_URL obrigatório — URL publicamente acessível pelo navegador do usuário, ex. https://files.seudominio.com.br ou http://SEU_IP:9000}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?MINIO_ROOT_USER obrigatório}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD obrigatório}
       MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-images}
@@ -83,6 +85,11 @@ services:
     image: ${FRONTEND_IMAGE:-ghcr.io/otavioprocopio/rgm-frontend:latest}
     container_name: rgm-frontend-prod
     restart: always
+    environment:
+      # A imagem do rgm-frontend usa "rgm_rap_backend" como default do Nginx —
+      # esse nome não existe nesta stack (o serviço aqui se chama "backend").
+      # Sem isso, todo /api/* falha ao resolver o hostname do backend.
+      BACKEND_URL: http://backend:8080
     ports:
       - "80:80"
       - "443:443"
