@@ -26,6 +26,7 @@ Para colocar toda a stack no ar em produção, você **não precisa compilar có
     O `make setup` já cria o `.env` a partir do template. Ajuste as seguintes chaves obrigatórias no arquivo gerado:
     *   `POSTGRES_PASSWORD`: Senha forte para o banco de dados.
     *   `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD`: Acesso administrativo do S3.
+    *   `MINIO_PUBLIC_URL`: URL do MinIO alcançável pelo navegador do usuário final (ex.: `https://files.seudominio.com.br` ou `http://SEU_IP:9000`). **Não deixe o default de desenvolvimento em produção** — sem um endereço público real, os links das evidências (fotos anexadas aos modelos/solicitações) não abrem para quem usa o sistema.
     *   `JWT_SECRET`: Chave secreta HMAC para assinatura de tokens (mínimo de 32 bytes).
 
 4.  **Inicie toda a stack**:
