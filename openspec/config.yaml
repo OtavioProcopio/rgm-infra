@@ -1,0 +1,35 @@
+schema: spec-driven
+
+context: |
+  Orquestracao de deploy do ecossistema RGM (Reparo/Gestao de Modelos). Repo puramente de
+  infraestrutura: docker-compose (dev/prod), Makefile de automacao, nginx (proxy reverso),
+  monitoring/, .env.example. Nao contem codigo de aplicacao - esse fica em rgm-backend
+  (Spring Boot) e rgm-frontend (React/Vite), clonados como repos irmaos via `make setup`.
+  Producao usa imagens Docker pre-buildadas do GHCR, nao compila localmente.
+  Stack: PostgreSQL, MinIO (S3-compatible, guarda evidencias/fotos), backend Spring Boot,
+  frontend servido via Nginx.
+  Mudancas aqui tendem a ser: variaveis de ambiente, portas, volumes, healthchecks, targets
+  do Makefile, configuracao de proxy/TLS. Mudancas de infra sao mais arriscadas que as de
+  aplicacao (afetam producao diretamente) - proposals devem ser conservadoras e reversiveis.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
