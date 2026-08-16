@@ -43,6 +43,8 @@ A stack iniciará os seguintes serviços:
 *   `db` (PostgreSQL 16)
 *   `minio` (Armazenamento compatível com S3)
 *   `minio-init` (Script temporário para criar o bucket público automaticamente)
+*   `db-backup` (Backup agendado do PostgreSQL, com rotação diária/semanal/mensal)
+*   `minio-backup` (Espelhamento agendado do bucket do MinIO para backup)
 *   `backend` (API REST Java/Spring Boot)
 *   `frontend` (React + Nginx servindo o build estático e fazendo proxy das rotas `/api/*` diretamente para o backend).
 
@@ -94,6 +96,8 @@ O projeto possui comandos mapeados no `Makefile` para facilitar a administraçã
 | `make logs` | Exibe os logs de todos os containers ativos em tempo real. |
 | `make reset` | Limpa volumes, recria o banco de dados e reinicia os containers (PERDE DADOS). |
 | `make test-e2e` | Executa os testes Cypress completos de forma headless. |
+| `make backup-now` | Roda um backup manual do Postgres e do MinIO imediatamente, fora do agendamento. |
+| `make backup-status` | Mostra os backups mais recentes de Postgres e MinIO. |
 
 ---
 
@@ -101,3 +105,41 @@ O projeto possui comandos mapeados no `Makefile` para facilitar a administraçã
 
 O frontend possui um arquivo `nginx.conf` integrado que serve os arquivos estáticos e atua como proxy reverso para `/api/` redirecionando para `http://backend:8080/api/`. 
 Isso elimina a necessidade de expor a porta do backend (`8080`) publicamente e resolve problemas de **CORS** nativamente em produção.
+
+---
+
+## 💾 Backup automatizado
+
+A stack de produção (`docker-compose.prod.yml`) inclui dois serviços de backup que rodam sozinhos, sem intervenção manual:
+
+*   **`db-backup`** — usa a imagem [`prodrigestivill/postgres-backup-local`](https://github.com/prodrigestivill/docker-postgres-backup-local) para rodar `pg_dump` no horário definido por `BACKUP_SCHEDULE` (default: `@daily`), com rotação automática controlada por `BACKUP_KEEP_DAYS`/`BACKUP_KEEP_WEEKS`/`BACKUP_KEEP_MONTHS`. Os dumps comprimidos ficam em `./backups/postgres`.
+*   **`minio-backup`** — roda `scripts/minio-backup.sh` em loop, espelhando (`mc mirror --overwrite`, **sem** `--remove`) o bucket configurado para `./backups/minio` a cada `MINIO_BACKUP_INTERVAL_SECONDS` (default: 1 dia). Sem `--remove` de propósito: um arquivo apagado no bucket original **não** é removido do backup — o objetivo é proteger contra exclusão acidental, não manter um espelho idêntico.
+
+Ambos gravam em bind mounts no host (não em volumes Docker nomeados), justamente para que a pasta `backups/` possa ser copiada/sincronizada facilmente para fora da VPS (rsync, S3, etc.) — **backup que mora só no mesmo disco que ele protege não é backup**.
+
+### Backup manual sob demanda
+
+```bash
+make backup-now
+```
+
+### Restaurar o Postgres a partir de um backup
+
+```bash
+# com a stack de produção rodando:
+gunzip -c backups/postgres/daily/rgm-db-<timestamp>.sql.gz | \
+  docker compose -f docker-compose.prod.yml --env-file .env exec -T db \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+```
+
+### Restaurar o bucket do MinIO a partir de um backup
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env exec minio-backup \
+  mc mirror --overwrite /backups "local/${MINIO_BUCKET_NAME:-images}"
+```
+
+> [!WARNING]
+> Os backups vivem no mesmo disco/VPS que os dados originais. Eles protegem contra
+> exclusão acidental e corrupção pontual, mas **não** contra perda total do disco/VPS.
+> Para isso, copie periodicamente a pasta `backups/` para fora da máquina.

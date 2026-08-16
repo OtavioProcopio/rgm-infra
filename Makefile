@@ -4,6 +4,7 @@
         test-all test-e2e test-e2e-spec test-backend test-backend-all test-frontend check-frontend validate \
         monitoring-up monitoring-down \
         build-prod prod-up prod-down prod-logs \
+        backup-now backup-status \
         reset reset-infra reset-prod status
 
 COMPOSE_DEV        := docker compose -f docker-compose.dev.yml --env-file .env
@@ -166,6 +167,19 @@ prod-down: ## Parar stack de produção
 
 prod-logs: ## Seguir logs de produção
 	$(COMPOSE_PROD) logs -f
+
+# ── Backup ───────────────────────────────────────────────────
+
+backup-now: ## Rodar backup manual do Postgres e do MinIO agora (fora do agendamento)
+	$(COMPOSE_PROD) exec db-backup /backup.sh
+	$(COMPOSE_PROD) exec minio-backup sh /scripts/minio-backup.sh --once
+
+backup-status: ## Ver os backups mais recentes de Postgres e MinIO
+	@echo "=== Backups Postgres (./backups/postgres) ==="
+	@ls -lht backups/postgres/daily 2>/dev/null | head -6 || echo "  nenhum backup ainda"
+	@echo ""
+	@echo "=== Backups MinIO (./backups/minio) ==="
+	@du -sh backups/minio 2>/dev/null || echo "  nenhum backup ainda"
 
 # ── Limpeza ───────────────────────────────────────────────────
 

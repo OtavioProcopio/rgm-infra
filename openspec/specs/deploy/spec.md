@@ -66,3 +66,29 @@ um ambiente com outro.
   stack de producao
 - **THEN** apenas os containers definidos em `docker-compose.dev.yml` sao
   afetados
+
+### Requirement: Backup automatizado de Postgres e MinIO
+O sistema SHALL manter, na stack de producao, backup automatico e agendado
+do banco PostgreSQL (dump comprimido via `pg_dump`, com rotacao
+diaria/semanal/mensal configuravel) e do bucket MinIO (espelhamento sem
+remocao), gravados em bind mounts no host (`./backups/postgres`,
+`./backups/minio`) para facilitar copia posterior para fora da VPS. O
+sistema SHALL tambem permitir acionar um backup manual sob demanda via
+`make backup-now`, sem esperar o proximo agendamento.
+
+#### Scenario: Backup periodico do Postgres
+- **WHEN** a stack de producao esta rodando
+- **THEN** o servico `db-backup` executa `pg_dump` no horario configurado
+  por `BACKUP_SCHEDULE` e mantem os arquivos conforme a retencao
+  configurada (`BACKUP_KEEP_DAYS`/`BACKUP_KEEP_WEEKS`/`BACKUP_KEEP_MONTHS`)
+
+#### Scenario: Backup periodico do MinIO sem propagar exclusoes
+- **WHEN** a stack de producao esta rodando
+- **THEN** o servico `minio-backup` espelha o bucket configurado para
+  `./backups/minio` a cada `MINIO_BACKUP_INTERVAL_SECONDS`, sem remover do
+  backup arquivos que foram apagados do bucket original
+
+#### Scenario: Backup manual sob demanda
+- **WHEN** um operador executa `make backup-now`
+- **THEN** um backup do Postgres e um backup do MinIO sao executados
+  imediatamente, fora do agendamento

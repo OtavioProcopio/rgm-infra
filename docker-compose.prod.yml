@@ -51,6 +51,42 @@ services:
       exit 0;
       "
 
+  db-backup:
+    image: prodrigestivill/postgres-backup-local:16-alpine
+    container_name: rgm-db-backup-prod
+    restart: always
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-rgm}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD obrigatório}
+      SCHEDULE: ${BACKUP_SCHEDULE:-@daily}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-7}
+      BACKUP_KEEP_WEEKS: ${BACKUP_KEEP_WEEKS:-4}
+      BACKUP_KEEP_MONTHS: ${BACKUP_KEEP_MONTHS:-6}
+    volumes:
+      - ./backups/postgres:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
+  minio-backup:
+    image: minio/mc:latest
+    container_name: rgm-minio-backup-prod
+    restart: always
+    entrypoint: ["/bin/sh", "/scripts/minio-backup.sh"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER obrigatório}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD obrigatório}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-images}
+      MINIO_BACKUP_INTERVAL_SECONDS: ${MINIO_BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - ./backups/minio:/backups
+      - ./scripts/minio-backup.sh:/scripts/minio-backup.sh:ro
+    depends_on:
+      minio:
+        condition: service_healthy
+
   backend:
     image: ${BACKEND_IMAGE:-ghcr.io/otavioprocopio/rgm-backend:latest}
     container_name: rgm-backend-prod
